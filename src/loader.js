@@ -1,5 +1,3 @@
-import {join, dirname, extname, basename} from 'path'
-import loaderUtils from 'loader-utils'
 import precompileCSSInJS from 'css-in-js-precompiler'
 import VirtualModulePlugin from './VirtualModulePlugin'
 
@@ -13,13 +11,6 @@ module.exports = function loader(content) {
   const results = precompileCSSInJS({
     sources: [{code: content, filename: this.resourcePath}],
   })
-  console.log(
-    '**************************************************************************\n\n\n',
-  )
-  console.log(results, this.resourcePath)
-  console.log(
-    '\n\n\n**************************************************************************',
-  )
 
   if (!results.css.length) {
     return content
@@ -33,10 +24,7 @@ module.exports = function loader(content) {
     compilation[LOADER_PLUGIN] = plugin
   }
 
-  // styles.forEach((style, idx) => {
-  //   style.path = `${basepath}__css_literal_loader_${idx++}${extension}`
-  //   plugin.addFile(style.path, style.value)
-  // })
+  plugin.addFile(`${this.resourcePath}.css`, results.css)
 
-  return results.transformed[0].code
+  return `require("${this.resourcePath}.css");\n${results.transformed[0].code}`
 }

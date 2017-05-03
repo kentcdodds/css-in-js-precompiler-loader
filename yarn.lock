@@ -1530,7 +1530,7 @@ crypto-browserify@^3.11.0:
 
 "css-in-js-precompiler@https://github.com/kentcdodds/css-in-js-precompiler.git":
   version "0.0.0-semantically-released"
-  resolved "https://github.com/kentcdodds/css-in-js-precompiler.git#5b6c4b7b50357ebca8d7ca303221fb47b2597c30"
+  resolved "https://github.com/kentcdodds/css-in-js-precompiler.git#2758ddad78293a17a440b51b4a16bbdd0d92f6f0"
   dependencies:
     babel-core "^6.24.1"
     glamor "^2.20.24"
