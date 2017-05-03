@@ -1,7 +1,10 @@
 {
   "presets": [
-    ["es2015", { "loose": true }],
-    "stage-1",
-    "react"
+    ["env", {
+      "targets": {
+        "node": 4.5
+      }
+    }],
+    "stage-2"
   ]
 }

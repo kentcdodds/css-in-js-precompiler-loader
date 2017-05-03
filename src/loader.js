@@ -1,72 +1,42 @@
-import { join, dirname, extname, basename } from 'path';
-import loaderUtils from 'loader-utils';
+import {join, dirname, extname, basename} from 'path'
+import loaderUtils from 'loader-utils'
+import precompileCSSInJS from 'css-in-js-precompiler'
+import VirtualModulePlugin from './VirtualModulePlugin'
 
-import traverse from './traverse';
-import visitor from './visitor';
-import VirtualModulePlugin from './VirtualModulePlugin';
-
-function collectStyles(src, tagName = 'css') {
-  const styles = [];
-
-  // quick regex as an optimization to avoid parsing each file
-  if (!src.match(new RegExp(`${tagName}\`([\\s\\S]*?)\``, 'gmi'))) {
-    return styles;
-  }
-
-  traverse(src, visitor(styles), { tagName });
-
-  return styles;
-}
-
-function replaceStyleTemplates(src, styles) {
-  let offset = 0;
-
-  function splice(str, start, end, replace) {
-    const result = (
-      str.slice(0, start + offset) + replace + str.slice(end + offset)
-    );
-
-    offset += replace.length - (end - start);
-    return result;
-  }
-
-  styles.forEach(({ start, end, path }) => {
-    src = splice(src, start, end, `require('./${basename(path)}')`);
-  });
-
-  return src;
-}
-
-const LOADER_PLUGIN = Symbol('loader added VM plugin');
-
+const LOADER_PLUGIN = Symbol('loader added VM plugin')
 
 module.exports = function loader(content) {
-  if (this.cacheable) this.cacheable();
-
-
-  const { tagName, extension = '.css' } = loaderUtils.getOptions(this) || {};
-  
-  const styles = collectStyles(content, tagName);
-
-  if (!styles.length) return content;
-
-  const basepath = join(
-    dirname(this.resource),
-    basename(this.resource, extname(this.resource))
-  );
-
-  const compilation = this._compilation; // eslint-disable-line no-underscore-dangle
-  let plugin = compilation[LOADER_PLUGIN];
-
-  if (!plugin) {
-    plugin = compilation[LOADER_PLUGIN] =
-      VirtualModulePlugin.bootstrap(compilation);
+  if (this.cacheable) {
+    this.cacheable()
   }
 
-  styles.forEach((style, idx) => {
-    style.path = `${basepath}__css_literal_loader_${idx++}${extension}`;
-    plugin.addFile(style.path, style.value);
-  });
+  const results = precompileCSSInJS({
+    sources: [{code: content, filename: this.resourcePath}],
+  })
+  console.log(
+    '**************************************************************************\n\n\n',
+  )
+  console.log(results, this.resourcePath)
+  console.log(
+    '\n\n\n**************************************************************************',
+  )
 
-  return replaceStyleTemplates(content, styles);
-};
+  if (!results.css.length) {
+    return content
+  }
+
+  const compilation = this._compilation
+  let plugin = compilation[LOADER_PLUGIN]
+
+  if (!plugin) {
+    plugin = VirtualModulePlugin.bootstrap(compilation)
+    compilation[LOADER_PLUGIN] = plugin
+  }
+
+  // styles.forEach((style, idx) => {
+  //   style.path = `${basepath}__css_literal_loader_${idx++}${extension}`
+  //   plugin.addFile(style.path, style.value)
+  // })
+
+  return results.transformed[0].code
+}
